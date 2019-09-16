@@ -13,6 +13,7 @@ const writeFile = cb2promise(fs.writeFile)
 const unlink = cb2promise(fs.unlink)
 const docPath = path.join(cwd, 'docs')
 let id = 1
+let firstBuilding = true
 
 async function makeBlogName() {
     let docs = await readdir(docPath)
@@ -23,14 +24,18 @@ async function makeBlogName() {
     return docName
 }
 
-console.log('请打开 http://localhost:6688 访问项目')
 const app = express()
 const Bundler = require(path.join(cwd, 'node_modules/parcel-bundler'))
 const bundler = new Bundler(path.join(cwd, 'scripts/index.js'), {
     contentHash: false,
     sourceMaps: false,
 })
-bundler.on('bundled', (bundler) => {
+bundler.on('bundled', () => {
+    if (firstBuilding) {
+        firstBuilding = false
+        console.log('请打开 http://localhost:6688 访问项目')
+    }
+    
     copyHTML('dist/')
 })
 
