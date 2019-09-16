@@ -5,7 +5,8 @@
   "main": "out/index.html",
   "scripts": {
     "start": "gmaker start",
-    "build": "gmaker build"
+    "build": "gmaker build",
+    "publish": "gmaker publish"
   },
   "browserList": "> 0.25%",
   "babel": {

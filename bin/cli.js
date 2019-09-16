@@ -2,7 +2,7 @@
 
 const path = require('path')
 const fs = require('fs')
-const os = require('os')
+const git = require('simple-git/promise')
 const inquirer = require('inquirer')
 const { cb2promise, copy, mkdirp, runCommand, copyHTML } = require('../build/utils')
 const package = require('../pkg/package.json')
@@ -50,8 +50,34 @@ async function installDependencies() {
     })
 }
 
-;(async () => {
+async function buildProject() {
     const parcel = path.join(cwd, `node_modules/.bin/parcel`)
+    await runCommand(parcel, `build scripts${path.sep}index.js --no-content-hash --no-source-maps --out-dir out`.split(' '), {
+        cwd
+    })
+    await copyHTML()
+}
+
+async function publishProject() {    
+    await buildProject()
+
+    const repo = git(cwd)
+    await repo.add('./*')
+    
+    let { commit } = await inquirer.prompt([
+        {
+            name: 'commit',
+            type: 'edit',
+            message: '提交信息:',
+        }
+    ])
+    await repo.commit(commit)
+
+    let { remote } = require(path.join(cwd, 'config.json'))
+    await repo.push(...remote)
+}
+
+;(async () => {
     switch (cmd) {
         case 'init':
         init()
@@ -62,10 +88,12 @@ async function installDependencies() {
         break
     
         case 'build':
-        await runCommand(parcel, `build scripts${path.sep}index.js --no-content-hash --no-source-maps --out-dir out`.split(' '), {
-            cwd
-        })
-        await copyHTML()
+        await buildProject()
         console.log('build success...')
-    }    
+        break
+
+        case 'publish':
+        await publishProject()
+        console.log('publish success...')
+    }
 })()
