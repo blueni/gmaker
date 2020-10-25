@@ -1,7 +1,7 @@
 {
   "name": "blogs",
   "version": "1.0.0",
-  "description": "Gitpage blog",
+  "description": "GMaker一键打造静态网站",
   "main": "out/index.html",
   "scripts": {
     "start": "gmaker start",

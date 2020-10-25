@@ -1,29 +1,16 @@
-const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const bodyParser = require('body-parser')
-const { cb2promise, copyHTML } = require('./build/utils')
-const buildSummary = require('./build/summary')
+const { copyHTML } = require('./build/utils')
+const { updateCategory } = require('./build/quick_index')
+const { saveDoc, makeDocId, deleteDoc } = require('./build/doc')
+const { saveLabels } = require('./build/label')
 
 const cwd = process.cwd()
+const resolve = (...args) => path.join(cwd, ...args)
 process.chdir(cwd)
 
-const readdir = cb2promise(fs.readdir)
-const writeFile = cb2promise(fs.writeFile)
-const unlink = cb2promise(fs.unlink)
-const docPath = path.join(cwd, 'docs')
-let id = 1
 let firstBuilding = true
-
-async function makeBlogName() {
-    let docs = await readdir(docPath)
-    let docName = `blog${id}.md`
-    while (docs.indexOf(docName) >= 0) {
-        docName = `blog${++id}.md`
-    }
-    return docName
-}
-
 const app = express()
 const Bundler = require(path.join(cwd, 'node_modules/parcel-bundler'))
 const bundler = new Bundler(path.join(cwd, 'scripts/index.js'), {
@@ -39,51 +26,73 @@ bundler.on('bundled', () => {
     copyHTML('dist/')
 })
 
-app.use('/public', express.static(path.join(cwd, './public')))
-app.use('/docs', express.static(path.join(cwd, './docs')))
-app.use('/data', express.static(path.join(cwd, './data')))
-app.use('/dist', express.static(path.join(cwd, './dist')))
+app.use('/public', express.static(resolve('./public')))
+app.use('/docs', express.static(resolve('./docs')))
+app.use('/data', express.static(resolve('./data')))
+app.use('/dist', express.static(resolve('./dist')))
 app.use(bundler.middleware())
 app.use(bodyParser.json())
 
 // 提交博客
 app.post('/blog/submit', async (req, res, next) => {
     let body = req.body
-    if (!body.name) {
-        body.name = await makeBlogName()
+    let doc = {
+        id: body.id,
+        name: body.name,
+        title: body.title,
+        category: body.category,
+        oldCategory: body.oldCategory,
+        labels: body.labels,
     }
-    await writeFile(path.join(docPath, body.name), body.content)
-    await buildSummary(body)
 
+    // 新增
+    if (doc.id === '' || isNaN(doc.id)) {
+        doc.id = await makeDocId()
+        doc.name = `blog${doc.id}.md`
+    }
+    
+    await saveDoc(doc, body.content)
     res.end('success')
 })
 
 // 删除博客
 app.post('/blog/delete', async (req, res, next) => {
-    await unlink(path.join(docPath, req.body.name))
-    await buildSummary()
+    let body = req.body
+    let doc = {
+        id: body.id,
+        category: body.category,
+    }
+    await deleteDoc(doc)
 
+    res.end('success')
+})
+
+// 新增文章分类
+app.post('/category/submit', async (req, res, next) => {
+    let category = req.body.category
+    if (!category || category === 'null') {
+        res.end('请设置分类名...')
+        return
+    }
+
+    await updateCategory(category)
     res.end('success')
 })
 
 // 新增标签
 app.post('/label/submit', async (req, res, next) => {
     let label = req.body.label
-    let labelPath = path.join(cwd, 'data/labels.json')
+    if (!label || label === 'null') {
+        res.end('请设置标签名...')
+        return
+    }
 
-    let json = require(labelPath)
-    delete require.cache[labelPath]
-
-    json.labels.push(label)
-    await writeFile(labelPath, JSON.stringify(json))
-
+    await saveLabels(label)
     res.end('success')
 })
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(cwd, 'index.html'))
+    res.sendFile(resolve('index.html'))
 })
 
 app.listen(6688)
-
-buildSummary()

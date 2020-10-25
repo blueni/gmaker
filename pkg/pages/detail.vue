@@ -1,13 +1,14 @@
 <template>
     <div class="detail-page" v-if="blog">
-        <router-link class="back-to-index" to="/">首页</router-link>
-        <h4 class="blog-title">
-            {{ blog.title }}
-            <small>{{ blog.mtimeMs | time }}</small>
-        </h4>
-        <div class="doc-content" id="md-viewer" v-show="detail">
-            <textarea style="display: none" :value="detail">{{ detail }}</textarea>
-            <!-- <div v-html="html"></div> -->
+        <div class="page-content">
+            <h4 class="blog-title">
+                {{ blog.title }}
+                <small>{{ blog.stats.mtimeMs | time }}</small>
+            </h4>
+            <div class="doc-content" id="md-viewer" v-show="detail">
+                <textarea style="display: none" :value="detail"></textarea>
+                <!-- <div v-html="html"></div> -->
+            </div>
         </div>
     </div>
 </template>
@@ -36,18 +37,19 @@ export default {
         },
     },
 
-    created() {
+    async created() {
+        let id = this.$route.params.id
         if (!this.blog) {
-            this.$router.replace('/')
-            return
+            let blog = await this.$sdk.getDocDescription(id)
+            this.$store.commit('blog', blog)
         }
-        let docName = this.$route.params.name
-        this.getDetail(docName)
+        document.title = this.blog.title
+        this.getDetail({ id })
     },
 
     methods: {
-        async getDetail(docName) {
-            let md = await this.$get(`/docs/${docName}`)
+        async getDetail(doc) {
+            let md = await this.$sdk.getDetail(doc)
             this.detail = md
             this.$nextTick(() => {
                 editormd.markdownToHTML('md-viewer', {
@@ -60,18 +62,7 @@ export default {
 </script>
 <style lang="less">
 .detail-page{
-    width: 90%;
-    max-width: 800px;
-    margin: 0 auto;
-
-    .back-to-index{
-        color: #2332a0;
-        text-decoration: none;
-
-        &:hover{
-            text-decoration: underline;
-        }
-    }
+    margin-top: 20px;
 
     .blog-title{
         font-size: 18px;

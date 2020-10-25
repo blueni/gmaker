@@ -41,12 +41,9 @@ async function mkdirp(dir) {
 
 async function createFile(file, content) {
     await mkdirp(path.dirname(file))
-
     try {
-        await access(file)
-    } catch (err) {
         await writeFile(file, content)
-    }
+    } catch (err) {}
 }
 
 async function copy(sourcePath, destPath) {
