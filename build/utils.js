@@ -10,6 +10,8 @@ const writeFile = cb2promise(fs.writeFile)
 const stat = cb2promise(fs.stat)
 const readdir = cb2promise(fs.readdir)
 
+const noop = () => void 0
+
 function cb2promise(fn) {
     return function(...args) {
         return new Promise((resolve, reject) => {
@@ -46,8 +48,12 @@ async function createFile(file, content) {
     } catch (err) {}
 }
 
-async function copy(sourcePath, destPath) {
+async function copy(sourcePath, destPath, ignore = noop) {
     return (async function _copy(sourcePath, destPath) {
+        if (ignore(destPath)) {
+            return Promise.resolve()
+        }
+
         await mkdirp(destPath)
         let res = await readdir(sourcePath)
         
@@ -60,9 +66,16 @@ async function copy(sourcePath, destPath) {
 
         return new Promise(resolve => {
             res.forEach(async item => {
+                if (ignore(item)) {
+                    finished++
+                    if (finished == length) {
+                        resolve()
+                    }
+                    return
+                }
+
                 let fullPath = path.join(sourcePath, item)
                 let fullDestPath = path.join(destPath, item)
-
                 let stats = await stat(fullPath)
                 if (stats.isDirectory()) {
                     await _copy(fullPath, fullDestPath)

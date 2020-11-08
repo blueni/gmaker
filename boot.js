@@ -12,10 +12,16 @@ process.chdir(cwd)
 
 let firstBuilding = true
 const app = express()
-const Bundler = require(path.join(cwd, 'node_modules/parcel-bundler'))
+let Bundler
+try{
+    Bundler = require(path.join(cwd, 'node_modules/parcel-bundler'))
+} catch(err){
+    Bundler = require('parcel-bundler')
+}
+
 const bundler = new Bundler(path.join(cwd, 'scripts/index.js'), {
     contentHash: false,
-    sourceMaps: false,
+    sourceMaps: true,
 })
 bundler.on('bundled', () => {
     if (firstBuilding) {

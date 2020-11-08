@@ -1,0 +1,46 @@
+{
+  "name": "blogs",
+  "version": "1.0.0",
+  "description": "GMaker一键打造静态网站",
+  "main": "out/index.html",
+  "scripts": {
+    "start": "gmaker start",
+    "build": "gmaker build",
+    "publish": "gmaker publish"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env"
+      ]
+    ],
+    "plugins": [
+      "@babel/plugin-transform-runtime",
+      [
+        "@babel/plugin-proposal-decorators",
+        {
+          "legacy": true
+        }
+      ]
+    ]
+  },
+  "browserList": "> 0.25%",
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-proposal-decorators": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "less": "^3.12.2"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.6.0",
+    "axios": "^0.21.0",
+    "marked": "^0.7.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-redux": "^7.2.2",
+    "react-router": "^5.2.0",
+    "react-router-dom": "^5.2.0",
+    "redux": "^4.0.5"
+  }
+}
