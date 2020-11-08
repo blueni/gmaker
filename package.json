@@ -1,6 +1,6 @@
 {
   "name": "gmaker",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "一键打造静态网站",
   "main": "index.js",
   "scripts": {
